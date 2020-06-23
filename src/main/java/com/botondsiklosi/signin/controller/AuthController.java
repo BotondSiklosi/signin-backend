@@ -33,8 +33,13 @@ public class AuthController {
 //        this.jwtTokenService = jwtTokenService;
 //    }
 
+    @GetMapping("/hello")
+    public String hello() {
+        return "Hello World";
+    }
+
     @PostMapping("/register")
-    public ResponseEntity register(@RequestBody UserCredentials userData, HttpServletResponse response) throws AuthenticationException {
+    public ResponseEntity<?> register(@RequestBody UserCredentials userData, HttpServletResponse response) throws AuthenticationException {
         try {
             if (!userService.checkIfAlreadyRegisteredAndRegister(userData)) return ResponseEntity.ok("");
             throw new Exception();
@@ -44,12 +49,12 @@ public class AuthController {
     }
 
 
-    @PostMapping("/signIn")
-    public ResponseEntity signIn(@RequestBody UserCredentials userData, HttpServletResponse response) throws AuthenticationException{
+    @PostMapping("/login")
+    public ResponseEntity<?> signIn(@RequestBody UserCredentials userData, HttpServletResponse response) throws AuthenticationException{
 
         try {
             User user = userRepository.findByUsername(userData.getUsername());
-            Cookie cookieToken = new Cookie("token", "signedIn");
+            Cookie cookieToken = new Cookie("token", "loggedIn");
             cookieToken.setMaxAge(60 * 60 * 24);
             cookieToken.setHttpOnly(true);
             cookieToken.setPath("/");
@@ -62,10 +67,10 @@ public class AuthController {
 
     }
 
-    @GetMapping("/signOut")
-    public ResponseEntity signOut(HttpServletResponse response) throws AuthenticationException {
+    @GetMapping("/logout")
+    public ResponseEntity<?> signOut(HttpServletResponse response) throws AuthenticationException {
         try {
-            Cookie cookieToken = new Cookie("token", "signedIn");
+            Cookie cookieToken = new Cookie("token", "loggedOut");
             cookieToken.setMaxAge(0);
             cookieToken.setHttpOnly(true);
             cookieToken.setPath("/");

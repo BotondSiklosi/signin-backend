@@ -15,7 +15,7 @@ public class UserService {
     // true if already registered
     public boolean checkIfAlreadyRegisteredAndRegister(UserCredentials userData) {
         if (userRepository.findByUsername(userData.getUsername()) == null) {
-            userRepository.save(new User(userData.getUsername(), userData.getPassword()));
+            userRepository.save(new User(userData.getUsername(),userData.getEmail(), userData.getPassword()));
             return false;
         }
 
