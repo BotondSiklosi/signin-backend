@@ -1,14 +1,17 @@
 package com.botondsiklosi.signin.service;
 
 import com.botondsiklosi.signin.entity.User;
+import com.botondsiklosi.signin.model.Role;
 import com.botondsiklosi.signin.model.UserCredentials;
 import com.botondsiklosi.signin.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+import java.util.Arrays;
+import java.util.HashSet;
+
+@Service
 @RequiredArgsConstructor
 public class UserService {
 
@@ -21,6 +24,7 @@ public class UserService {
             userRepository.save(User.builder()
                     .username(userData.getUsername())
                     .email(userData.getEmail())
+                    .roles( new HashSet<>(Arrays.asList(Role.USER, Role.ADMIN)) )
                     .password(encoder.encode(userData.getPassword()))
                     .build());
             return false;

@@ -1,19 +1,17 @@
 package com.botondsiklosi.signin.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.botondsiklosi.signin.model.Role;
+import lombok.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Entity
-@Table
 public class User {
 
     @Id
@@ -28,5 +26,10 @@ public class User {
 
     @NotEmpty
     private String password;
+
+    @ElementCollection
+    @Singular
+    @NotEmpty
+    private Set<Role> roles;
 
 }

@@ -5,13 +5,17 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import io.jsonwebtoken.security.Keys;
 import javax.annotation.PostConstruct;
 import java.security.Key;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,9 +39,14 @@ public class JwtUtil {
                 .setSigningKey(secretKey)
                 .parseClaimsJws(token)
                 .getBody();
+        ArrayList<String> rolesList = claims.get("roles", ArrayList.class);
+        List<SimpleGrantedAuthority> roles =
+                rolesList.stream()
+                        .map(SimpleGrantedAuthority::new)
+                        .collect(Collectors.toList());
         return new UsernamePasswordAuthenticationToken(
                 claims.getSubject(),
-                null);
+                null, roles);
     }
 
     public String generateToken(Authentication authentication) {
@@ -51,7 +60,7 @@ public class JwtUtil {
                 .claim("roles", roles)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * jwtExpirationMinutes))
-                .signWith(secretKey)
+                .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
     }
 }
