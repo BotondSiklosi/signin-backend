@@ -29,9 +29,4 @@ public class User {
     @NotEmpty
     private String password;
 
-    public User(@NotEmpty String username, @NotEmpty String email, @NotEmpty String password) {
-        this.username = username;
-        this.email = email;
-        this.password = password;
-    }
 }

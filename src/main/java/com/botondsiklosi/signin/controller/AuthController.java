@@ -3,26 +3,36 @@ package com.botondsiklosi.signin.controller;
 import com.botondsiklosi.signin.entity.User;
 import com.botondsiklosi.signin.model.UserCredentials;
 import com.botondsiklosi.signin.repository.UserRepository;
+import com.botondsiklosi.signin.security.JwtUtil;
 import com.botondsiklosi.signin.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import javax.naming.AuthenticationException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
+import java.time.Duration;
 
 @RestController
 @CrossOrigin
+@RequiredArgsConstructor
 @RequestMapping("/auth")
 public class AuthController {
 
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private UserService userService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+    private final UserService userService;
 
 //    private final AuthenticationManager authenticationManager;
 //
@@ -39,31 +49,24 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody UserCredentials userData, HttpServletResponse response) throws AuthenticationException {
-        try {
-            if (!userService.checkIfAlreadyRegisteredAndRegister(userData)) return ResponseEntity.ok("");
-            throw new Exception();
-        } catch (Exception e) {
-            throw new AuthenticationException("register failed");
+    public ResponseEntity<?> register(@RequestBody UserCredentials userData) {
+        if (userService.checkIfAlreadyRegisteredAndRegister(userData)) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(userData.getUsername());
         }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User is already registered!");
     }
 
 
     @PostMapping("/login")
-    public ResponseEntity<?> signIn(@RequestBody UserCredentials userData, HttpServletResponse response) throws AuthenticationException{
+    public ResponseEntity<?> signIn(@RequestBody UserCredentials userData, HttpServletResponse response){
 
-        try {
-            User user = userRepository.findByUsername(userData.getUsername());
-            Cookie cookieToken = new Cookie("token", "loggedIn");
-            cookieToken.setMaxAge(60 * 60 * 24);
-            cookieToken.setHttpOnly(true);
-            cookieToken.setPath("/");
-            response.addCookie(cookieToken);
-
-            return ResponseEntity.ok(user);
-        } catch (Exception e) {
-            throw new AuthenticationException("Invalid username/password");
-        }
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                userData.getUsername(),
+                userData.getPassword()
+        ));
+        String jwtToken = jwtUtil.generateToken(authentication);
+        addTokenToCookie(response, jwtToken);
+        return ResponseEntity.ok().body(userData.getUsername());
 
     }
 
@@ -82,7 +85,17 @@ public class AuthController {
         }
     }
 
-
+    private void addTokenToCookie(HttpServletResponse response, String token) {
+        ResponseCookie cookie = ResponseCookie.from("token", token)
+                .domain("localhost") // should be parameterized
+                .sameSite("Strict")  // CSRF
+//                .secure(true)
+                .maxAge(Duration.ofHours(24))
+                .httpOnly(true)      // XSS
+                .path("/")
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
+    }
 
 
 }
