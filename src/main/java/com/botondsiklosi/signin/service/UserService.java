@@ -1,9 +1,9 @@
 package com.botondsiklosi.signin.service;
 
-import com.botondsiklosi.signin.entity.User;
+import com.botondsiklosi.signin.entity.MyUser;
 import com.botondsiklosi.signin.model.Role;
 import com.botondsiklosi.signin.model.UserCredentials;
-import com.botondsiklosi.signin.repository.UserRepository;
+import com.botondsiklosi.signin.repository.MyUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,17 +15,17 @@ import java.util.HashSet;
 @RequiredArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder encoder;
+    private final MyUserRepository myUserRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // true if already registered
     public boolean checkIfAlreadyRegisteredAndRegister(UserCredentials userData) {
-        if (userRepository.findByUsername(userData.getUsername()) == null) {
-            userRepository.save(User.builder()
+        if (!myUserRepository.findByUsername(userData.getUsername()).isPresent()) {
+            myUserRepository.save(MyUser.builder()
                     .username(userData.getUsername())
                     .email(userData.getEmail())
                     .roles( new HashSet<>(Arrays.asList(Role.USER, Role.ADMIN)) )
-                    .password(encoder.encode(userData.getPassword()))
+                    .password(passwordEncoder.encode(userData.getPassword()))
                     .build());
             return false;
         }

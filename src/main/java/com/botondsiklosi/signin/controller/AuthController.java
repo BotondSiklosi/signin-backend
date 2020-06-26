@@ -1,8 +1,7 @@
 package com.botondsiklosi.signin.controller;
 
-import com.botondsiklosi.signin.entity.User;
 import com.botondsiklosi.signin.model.UserCredentials;
-import com.botondsiklosi.signin.repository.UserRepository;
+import com.botondsiklosi.signin.repository.MyUserRepository;
 import com.botondsiklosi.signin.security.JwtUtil;
 import com.botondsiklosi.signin.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -11,9 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.naming.AuthenticationException;
@@ -28,7 +27,7 @@ import java.time.Duration;
 public class AuthController {
 
     @Autowired
-    private UserRepository userRepository;
+    private MyUserRepository myUserRepository;
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
@@ -60,6 +59,9 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> signIn(@RequestBody UserCredentials userData, HttpServletResponse response){
 
+        System.out.println(userData.getUsername());
+        System.out.println(userData.getPassword());
+
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 userData.getUsername(),
                 userData.getPassword()
@@ -84,6 +86,18 @@ public class AuthController {
             throw new AuthenticationException("Logout failed");
         }
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<String> me() {
+        if (SecurityContextHolder.getContext()
+                .getAuthentication() == null) {
+            return ResponseEntity.status(403).body("No user!");
+        }
+        return  ResponseEntity.ok(SecurityContextHolder.getContext()
+                .getAuthentication().getName());
+
+    }
+
 
     private void addTokenToCookie(HttpServletResponse response, String token) {
         ResponseCookie cookie = ResponseCookie.from("token", token)

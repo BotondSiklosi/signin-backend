@@ -35,8 +35,9 @@ public class JwtUtil {
     }
 
     public UsernamePasswordAuthenticationToken validateTokenAndExtractUserSpringToken(String token) {
-        Claims claims = Jwts.parser()
+        Claims claims = Jwts.parserBuilder()
                 .setSigningKey(secretKey)
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
         ArrayList<String> rolesList = claims.get("roles", ArrayList.class);
@@ -60,7 +61,7 @@ public class JwtUtil {
                 .claim("roles", roles)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * jwtExpirationMinutes))
-                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .signWith(secretKey)
                 .compact();
     }
 }
